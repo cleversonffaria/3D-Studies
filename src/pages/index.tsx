@@ -2,16 +2,29 @@ import React, { useEffect, useState } from "react";
 // import { Canvas, useFrame, useThree } from "@react-three/fiber";
 
 // import { softShadows } from "@react-three/drei";
-// import { gsap } from "gsap/dist/gsap";
+import { gsap } from "gsap/dist/gsap";
 // import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 import * as THREE from "three";
 
 function Canvas3D({ mainRef }) {
-  const [canvas, setCanvas] = useState();
+  const [renderer, setRenderer] = useState(null);
+
   useEffect(() => {
-    setCanvas(prevState => document.querySelector(".webgl"));
+    setRenderer(
+      prevState =>
+        new THREE.WebGLRenderer({
+          canvas: document.querySelector(".webgl"),
+        }),
+    );
   }, []);
+
+  useEffect(() => {
+    requestRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [renderer]);
+
+  const requestRef = React.useRef(null);
 
   // Scene
   const scene = new THREE.Scene();
@@ -36,23 +49,45 @@ function Canvas3D({ mainRef }) {
   // cube1.position.y = -0.6;
   // cube1.position.z = 1;
 
-  cube1.position.set(0.7, -0.6, 1);
-  group.position.x = 3;
+  cube1.position.set(2, 0, 0);
 
   // Scale
   // cube1.scale.x = 2;
   // cube1.scale.y = 0.5;
   // cube1.scale.z = 0.5;
 
-  cube1.scale.set(2, 0.5, 0.5);
-  group.scale.x = 2;
-  group.scale.y = 0.2;
+  // cube1.scale.set(2, 0.5, 0.5);
 
   //Rotate
   cube1.rotation.reorder("YXZ");
   // cube1.rotation.x = 3;
   // cube1.rotation.y = 3;
-  cube1.rotation.z = Math.PI;
+  // cube1.rotation.z = Math.PI;
+
+  const clock = new THREE.Clock();
+
+  gsap.to(cube2.position, {
+    duration: 1,
+    delay: 1,
+    x: 4,
+  });
+
+  gsap.to(cube2.position, {
+    duration: 1,
+    delay: 2,
+    x: 0,
+  });
+
+  const tick = () => {
+    const elapsedTime = clock.getElapsedTime();
+    camera.position.y = Math.cos(elapsedTime);
+    camera.position.x = Math.sin(elapsedTime);
+
+    camera.lookAt(cube1.position);
+
+    renderer?.render(scene, camera);
+    requestRef.current = requestAnimationFrame(tick);
+  };
 
   group.add(cube1, cube2);
 
@@ -62,7 +97,7 @@ function Canvas3D({ mainRef }) {
   const sizes = { width: 800, height: 600 };
 
   const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
-  camera.position.z = 4;
+  camera.position.z = 6;
 
   camera.lookAt(cube1.position);
 
@@ -73,14 +108,8 @@ function Canvas3D({ mainRef }) {
   scene.add(axesHelper);
 
   // Render
-  if (canvas) {
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvas,
-    });
-
-    renderer.setSize(sizes.width, sizes.height);
-    renderer.render(scene, camera);
-  }
+  renderer?.setSize(sizes.width, sizes.height);
+  renderer?.render(scene, camera);
 
   return <canvas className="webgl"></canvas>;
 }
