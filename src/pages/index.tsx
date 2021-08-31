@@ -16,22 +16,61 @@ function Canvas3D({ mainRef }) {
   // Scene
   const scene = new THREE.Scene();
 
+  const group = new THREE.Group();
+
   // Red Cube
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  const cube1 = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshBasicMaterial({ color: 0xff0000 }),
+  );
 
-  const mesh = new THREE.Mesh(geometry, material);
+  // Blue Cube
 
-  scene.add(mesh);
+  const cube2 = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshBasicMaterial({ color: "blue" }),
+  );
+
+  // Position
+  // cube1.position.x = 0.7;
+  // cube1.position.y = -0.6;
+  // cube1.position.z = 1;
+
+  cube1.position.set(0.7, -0.6, 1);
+  group.position.x = 3;
+
+  // Scale
+  // cube1.scale.x = 2;
+  // cube1.scale.y = 0.5;
+  // cube1.scale.z = 0.5;
+
+  cube1.scale.set(2, 0.5, 0.5);
+  group.scale.x = 2;
+  group.scale.y = 0.2;
+
+  //Rotate
+  cube1.rotation.reorder("YXZ");
+  // cube1.rotation.x = 3;
+  // cube1.rotation.y = 3;
+  cube1.rotation.z = Math.PI;
+
+  group.add(cube1, cube2);
+
+  scene.add(group);
 
   // Camera
   const sizes = { width: 800, height: 600 };
 
   const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
-  camera.position.z = 3;
-  camera.position.x = 2;
+  camera.position.z = 4;
+
+  camera.lookAt(cube1.position);
 
   scene.add(camera);
+
+  //Axes Helper
+  const axesHelper = new THREE.AxesHelper();
+  scene.add(axesHelper);
 
   // Render
   if (canvas) {
