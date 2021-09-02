@@ -6,21 +6,46 @@ import { gsap } from "gsap/dist/gsap";
 // import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 import * as THREE from "three";
-import { WebGLRenderer } from "three";
-import { OrbitControls } from "three/examples/js/controls/OrbitControls";
-import { OrbitControlsProps } from "@react-three/drei";
+import { WebGLRenderer, PerspectiveCamera } from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
+// import imageSource from "public/assets/door/color.jpg";
 
 function Canvas3D({ mainRef }) {
   const [renderer, setRenderer] = useState<WebGLRenderer>(null);
+  const [camera, setCamera] = useState<PerspectiveCamera>(null);
+  const [orbitControls, setOrbitControls] = useState<OrbitControls>(null);
+  const [sizes, setSizes] = useState({
+    width: 800,
+    height: 600,
+  });
 
   useEffect(() => {
     // Render
     setRenderer(
-      prevState =>
-        new THREE.WebGLRenderer({
-          canvas: document.querySelector(".webgl"),
-        }),
+      new THREE.WebGLRenderer({
+        canvas: document.querySelector(".webgl"),
+      }),
     );
+
+    // Camera
+    const createCamera = new THREE.PerspectiveCamera(
+      75,
+      sizes.width / sizes.height,
+    );
+
+    setCamera(createCamera);
+
+    // OrbitControls
+    setOrbitControls(
+      new OrbitControls(createCamera, document.querySelector(".webgl")),
+    );
+
+    // Sizes
+    // setSizes({
+    //   width: window.,
+    //   height: window.,
+    // });
   }, []);
 
   useEffect(() => {
@@ -54,33 +79,19 @@ function Canvas3D({ mainRef }) {
   );
 
   // Blue Cube
-
   const cube2 = new THREE.Mesh(
     new THREE.BoxGeometry(1, 1, 1),
     new THREE.MeshBasicMaterial({ color: "blue" }),
   );
 
   // Position
-  // cube1.position.x = 0.7;
-  // cube1.position.y = -0.6;
-  // cube1.position.z = 1;
-
   cube1.position.set(2, 0, 0);
 
   // Scale
-  // cube1.scale.x = 2;
-  // cube1.scale.y = 0.5;
-  // cube1.scale.z = 0.5;
-
   // cube1.scale.set(2, 0.5, 0.5);
 
   //Rotate
   cube1.rotation.reorder("YXZ");
-  // cube1.rotation.x = 3;
-  // cube1.rotation.y = 3;
-  // cube1.rotation.z = Math.PI;
-
-  // const clock = new THREE.Clock();
 
   gsap.to(cube2.position, {
     duration: 1,
@@ -99,25 +110,23 @@ function Canvas3D({ mainRef }) {
   scene.add(group);
 
   // Camera
-  const sizes = { width: 800, height: 600 };
+  if (camera) {
+    camera.position.z = 6;
+    scene.add(camera);
+  }
 
-  const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
-  camera.position.z = 6;
-
-  // camera.lookAt(cube1.position);
-
-  scene.add(camera);
+  orbitControls.enableDamping = true;
 
   const tick = () => {
-    // const elapsedTime = clock.getElapsedTime();
-    // camera.position.y = Math.cos(elapsedTime);
-    // camera.position.x = Math.sin(elapsedTime);
-    // camera.lookAt(cube1.position);
+    // if (camera) {
+    //   camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 2;
+    //   camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 2;
+    //   camera.position.y = cursor.y * 5;
+    //   camera.lookAt(new THREE.Vector3());
+    // }
 
-    camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 2;
-    camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 2;
-    camera.position.y = cursor.y * 5;
-    camera.lookAt(new THREE.Vector3());
+    // Upate Controls
+    orbitControls.update();
 
     renderer?.render(scene, camera);
 
