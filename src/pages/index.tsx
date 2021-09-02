@@ -6,11 +6,15 @@ import { gsap } from "gsap/dist/gsap";
 // import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 import * as THREE from "three";
+import { WebGLRenderer } from "three";
+import { OrbitControls } from "three/examples/js/controls/OrbitControls";
+import { OrbitControlsProps } from "@react-three/drei";
 
 function Canvas3D({ mainRef }) {
-  const [renderer, setRenderer] = useState(null);
+  const [renderer, setRenderer] = useState<WebGLRenderer>(null);
 
   useEffect(() => {
+    // Render
     setRenderer(
       prevState =>
         new THREE.WebGLRenderer({
@@ -20,9 +24,21 @@ function Canvas3D({ mainRef }) {
   }, []);
 
   useEffect(() => {
+    window.addEventListener("mousemove", event => {
+      cursor.x = event.clientX / sizes.width - 0.5;
+      cursor.y = -(event.clientY / sizes.width - 0.5);
+    });
+
     requestRef.current = requestAnimationFrame(tick);
+    renderer?.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
     return () => cancelAnimationFrame(requestRef.current);
   }, [renderer]);
+
+  let cursor = {
+    x: 0,
+    y: 0,
+  };
 
   const requestRef = React.useRef(null);
 
@@ -64,7 +80,7 @@ function Canvas3D({ mainRef }) {
   // cube1.rotation.y = 3;
   // cube1.rotation.z = Math.PI;
 
-  const clock = new THREE.Clock();
+  // const clock = new THREE.Clock();
 
   gsap.to(cube2.position, {
     duration: 1,
@@ -78,17 +94,6 @@ function Canvas3D({ mainRef }) {
     x: 0,
   });
 
-  const tick = () => {
-    const elapsedTime = clock.getElapsedTime();
-    camera.position.y = Math.cos(elapsedTime);
-    camera.position.x = Math.sin(elapsedTime);
-
-    camera.lookAt(cube1.position);
-
-    renderer?.render(scene, camera);
-    requestRef.current = requestAnimationFrame(tick);
-  };
-
   group.add(cube1, cube2);
 
   scene.add(group);
@@ -99,9 +104,25 @@ function Canvas3D({ mainRef }) {
   const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
   camera.position.z = 6;
 
-  camera.lookAt(cube1.position);
+  // camera.lookAt(cube1.position);
 
   scene.add(camera);
+
+  const tick = () => {
+    // const elapsedTime = clock.getElapsedTime();
+    // camera.position.y = Math.cos(elapsedTime);
+    // camera.position.x = Math.sin(elapsedTime);
+    // camera.lookAt(cube1.position);
+
+    camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 2;
+    camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 2;
+    camera.position.y = cursor.y * 5;
+    camera.lookAt(new THREE.Vector3());
+
+    renderer?.render(scene, camera);
+
+    requestRef.current = requestAnimationFrame(tick);
+  };
 
   //Axes Helper
   const axesHelper = new THREE.AxesHelper();
