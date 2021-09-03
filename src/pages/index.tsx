@@ -1,147 +1,69 @@
-import React, { useEffect, useState } from "react";
-// import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import React, { Suspense, useEffect, useRef, useState } from "react";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 
 // import { softShadows } from "@react-three/drei";
 import { gsap } from "gsap/dist/gsap";
 // import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 import * as THREE from "three";
-import { WebGLRenderer, PerspectiveCamera } from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { WebGLRenderer, PerspectiveCamera, MeshStandardMaterial } from "three";
 
-// import imageSource from "public/assets/door/color.jpg";
+import doorMap from "public/assets/door/color.jpg";
+import doorDisplacement from "public/assets/door/height.jpg";
+import doorNormal from "public/assets/door/normal.jpg";
+import doorRoughtness from "public/assets/door/roughness.jpg";
+import doorAmbientOc from "public/assets/door/ambientOcclusion.jpg";
+
+import { useTexture, OrbitControls, useMatcapTexture } from "@react-three/drei";
+
+function Box(props) {
+  const ref = useRef(null);
+
+  const [hovered, setHover] = useState(false);
+  const [active, setActive] = useState(false);
+
+  useFrame((state, delta) => (ref.current.rotation.x += 0.01));
+
+  const propsTexture = useTexture({
+    map: doorMap.src,
+    displacementMap: doorDisplacement.src,
+    normalMap: doorNormal.src,
+    roughnessMap: doorRoughtness.src,
+    aoMap: doorAmbientOc.src,
+  });
+
+  const [matcap, url] = useMatcapTexture(
+    554, // https://github.com/emmelleppi/matcaps/blob/master/matcap-list.json
+    64, // size of the texture ( 64, 128, 256, 512, 1024 )
+  );
+
+  return (
+    <mesh
+      {...props}
+      ref={ref}
+      scale={active ? 1.5 : 1}
+      onClick={event => setActive(!active)}
+      onPointerOver={event => setHover(true)}
+      onPointerOut={event => setHover(false)}>
+      <boxGeometry args={[1, 1, 1]} />
+      {/* <meshStandardMaterial {...propsTexture} /> */}
+      <meshMatcapMaterial matcap={matcap} />
+    </mesh>
+  );
+}
 
 function Canvas3D({ mainRef }) {
-  const [renderer, setRenderer] = useState<WebGLRenderer>(null);
-  const [camera, setCamera] = useState<PerspectiveCamera>(null);
-  const [orbitControls, setOrbitControls] = useState<OrbitControls>(null);
-  const [sizes, setSizes] = useState({
-    width: 800,
-    height: 600,
-  });
-
-  useEffect(() => {
-    // Render
-    setRenderer(
-      new THREE.WebGLRenderer({
-        canvas: document.querySelector(".webgl"),
-      }),
-    );
-
-    // Camera
-    const createCamera = new THREE.PerspectiveCamera(
-      75,
-      sizes.width / sizes.height,
-    );
-
-    setCamera(createCamera);
-
-    // OrbitControls
-    setOrbitControls(
-      new OrbitControls(createCamera, document.querySelector(".webgl")),
-    );
-
-    // Sizes
-    // setSizes({
-    //   width: window.,
-    //   height: window.,
-    // });
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("mousemove", event => {
-      cursor.x = event.clientX / sizes.width - 0.5;
-      cursor.y = -(event.clientY / sizes.width - 0.5);
-    });
-
-    requestRef.current = requestAnimationFrame(tick);
-    renderer?.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [renderer]);
-
-  let cursor = {
-    x: 0,
-    y: 0,
-  };
-
-  const requestRef = React.useRef(null);
-
-  // Scene
-  const scene = new THREE.Scene();
-
-  const group = new THREE.Group();
-
-  // Red Cube
-  const cube1 = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshBasicMaterial({ color: 0xff0000 }),
+  return (
+    <Canvas camera={{ position: [0, 0, 8], fov: 70 }}>
+      <Suspense fallback={null}>
+        <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+        <ambientLight />
+        <pointLight position={[10, 20, 10]} />
+        <Box position={[-0.8, 0, 0]} />
+        <Box position={[0.8, 0, 0]} />
+      </Suspense>
+    </Canvas>
   );
-
-  // Blue Cube
-  const cube2 = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshBasicMaterial({ color: "blue" }),
-  );
-
-  // Position
-  cube1.position.set(2, 0, 0);
-
-  // Scale
-  // cube1.scale.set(2, 0.5, 0.5);
-
-  //Rotate
-  cube1.rotation.reorder("YXZ");
-
-  gsap.to(cube2.position, {
-    duration: 1,
-    delay: 1,
-    x: 4,
-  });
-
-  gsap.to(cube2.position, {
-    duration: 1,
-    delay: 2,
-    x: 0,
-  });
-
-  group.add(cube1, cube2);
-
-  scene.add(group);
-
-  // Camera
-  if (camera) {
-    camera.position.z = 6;
-    scene.add(camera);
-  }
-
-  orbitControls.enableDamping = true;
-
-  const tick = () => {
-    // if (camera) {
-    //   camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 2;
-    //   camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 2;
-    //   camera.position.y = cursor.y * 5;
-    //   camera.lookAt(new THREE.Vector3());
-    // }
-
-    // Upate Controls
-    orbitControls.update();
-
-    renderer?.render(scene, camera);
-
-    requestRef.current = requestAnimationFrame(tick);
-  };
-
-  //Axes Helper
-  const axesHelper = new THREE.AxesHelper();
-  scene.add(axesHelper);
-
-  // Render
-  renderer?.setSize(sizes.width, sizes.height);
-  renderer?.render(scene, camera);
-
-  return <canvas className="webgl"></canvas>;
 }
 
 export default Canvas3D;
