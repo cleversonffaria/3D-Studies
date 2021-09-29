@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from "react";
-// import { Canvas, useFrame, useThree } from "@react-three/fiber";
-
-// import { softShadows } from "@react-three/drei";
 import { gsap } from "gsap/dist/gsap";
-// import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 import * as THREE from "three";
 import { WebGLRenderer } from "three";
